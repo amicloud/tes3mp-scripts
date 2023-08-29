@@ -1,4 +1,4 @@
--- classInfo - Release 1.1 - For tes3mp v0.6.1
+-- classInfo - Release 2 - For tes3mp v0.7-prerelease (literally hasn't changed since 0.6.1 :P)
 -- save as classInfo.lua in the scripts folder
 
 --[[ INFO

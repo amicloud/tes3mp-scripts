@@ -1,31 +1,13 @@
--- kanaHousing - Release 1.5 - For tes3mp 0.6.1
+-- kanaHousing - Release 2.3 - For tes3mp 0.7-alpha
 
 --[[ INSTALLATION
-1) Save this file as "kanaHousing.lua" in mp-stuff/scripts
-2) Add [ kanaHousing = require("kanaHousing") ] to the top of server.lua
-3) Add the following to the elseif chain for commands in "OnPlayerSendMessage" inside server.lua
-[	elseif cmd[1] == "house" or cmd[1] == "housing" then
-		kanaHousing.OnUserCommand(pid) 
-	elseif cmd[1] == "adminhouse" or cmd[1] == "adminhousing" then
-		kanaHousing.OnAdminCommand(pid) 
-	elseif cmd[1] == "houseinfo" then
-		kanaHousing.OnInfoCommand(pid)	]
-4) Add the following to OnGUIAction in server.lua
-	[ if kanaHousing.OnGUIAction(pid, idGui, data) then return end ]
-5) Add the following to OnServerPostInit in server.lua
-	[ kanaHousing.OnServerPostInit() ]
-6) Add the following to the end of OnPlayerCellChange in server.lua
-	[ kanaHousing.OnPlayerCellChange(pid) ]
-7) Add the following to the end of OnObjectLock in server.lua
-	[ kanaHousing.OnObjectLock(pid, cellDescription) ]
-8) Add the following to the end of OnContainer in server.lua
-	[ kanaHousing.OnContainer(pid, cellDescription) ]
-9) Add the following to the end of OnObjectDelete in server.lua
-	[ kanaHousing.OnObjectDelete(pid, cellDescription) ]
-n) If you have kanaFurniture installed, uncomment (remove the -- at the beginning) the line [ kanaFurniture = require("kanaFurniture") ] that is after this installation info box. Requires kanaFurniture release 2 or later.
+1) Save this file as "kanaHousing.lua" in server/scripts/custom
+2) Add [ kanaHousing = require("custom.kanaHousing") ] to the top of customScripts.lua
+
+n) If you have kanaFurniture installed, uncomment (remove the -- at the beginning) the line [ kanaFurniture = require("custom.kanaFurniture") ] that is after this installation info box. Requires kanaFurniture release 3 or later.
 ]]
 
---kanaFurniture = require("kanaFurniture")
+--kanaFurniture = require("custom.kanaFurniture")
 
 local config = {}
 
@@ -53,11 +35,9 @@ config.PlayerSellConfirmGUI = 31385
 
 -------------------
 jsonInterface = require("jsonInterface")
-myMod = require("myMod")
 inventoryHelper = require("inventoryHelper")
 color = require("color")
 local serverConfig = require("config")
-actionTypes = require("actionTypes")
 
 local Methods = {}
 --Forward Declarations:
@@ -77,17 +57,15 @@ local function msg(pid, text)
 end
 
 local function Save()
-	jsonInterface.save("kanaHousing.json", housingData)
+	jsonInterface.save("custom/kanaHousing.json", housingData)
 end
 
 local function Load()
-	housingData = jsonInterface.load("kanaHousing.json")
+	housingData = jsonInterface.load("custom/kanaHousing.json")
 end
 
 Methods.OnServerPostInit = function()
-	local file = io.open(os.getenv("MOD_DIR") .. "/kanaHousing.json", "r")
-	if file ~= nil then
-		io.close()
+	if jsonInterface.load("custom/kanaHousing.json") ~= nil then
 		Load()
 	else
 		Save()
@@ -100,7 +78,7 @@ end
 
 --Returns the amount of gold in a player's inventory
 local function getPlayerGold(playerName) --playerName is the name of the player (capitalization doesn't matter)
-	local player = myMod.GetPlayerByName(playerName)
+	local player = logicHandler.GetPlayerByName(playerName)
 	
 	if player then
 		local goldLoc = inventoryHelper.getItemIndex(player.data.inventory, "gold_001", -1)
@@ -118,7 +96,7 @@ end
 
 local function addGold(playerName, amount) --playerName is the name of the player to add the gold to (capitalization doesn't matter). Amount is the amount of gold to add (can be negative if you want to subtract gold).
 	--Find the player
-	local player = myMod.GetPlayerByName(playerName)
+	local player = logicHandler.GetPlayerByName(playerName)
 	
 	--Check we found the player before proceeding
 	if player then
@@ -534,7 +512,7 @@ local function isAllowedEnter(pid, cell)
 			return true, "owner"
 		elseif isCoOwner(pname, hdata.name) then
 			return true, "coowner"
-		elseif Players[pid].data.settings.admin > 0 then --Moderators/Admins should always be allowed to enter
+		elseif Players[pid].data.settings.staffRank > 0 then --Moderators/Admins should always be allowed to enter
 			return true, "admin"
 		elseif cdata.requiredAccess then
 			return true, "access"
@@ -559,7 +537,7 @@ local function unlockChecks(cell)
 		for cellName, ddata in pairs(hdata.doors) do
 			if cellName == cell then
 				if LoadedCells[cell] == nil then
-					myMod.LoadCell(cell)
+					logicHandler.LoadCell(cell)
 				end
 				
 				for i, doorData in pairs(ddata) do
@@ -585,7 +563,7 @@ local function unlockChecks(cell)
 		LoadedCells[cell]:Save()
 		for playerId, player in pairs(Players) do
 			if player:IsLoggedIn() then
-				LoadedCells[cell]:SendObjectsLocked(playerId)
+				LoadedCells[cell]:LoadObjectsLocked(playerId, LoadedCells[cell].data.objectData, LoadedCells[cell].data.packets.lock)
 			end
 		end
 	end
@@ -719,7 +697,7 @@ end
 showPlayerSettingsAddPrompt = function(pid)
 	local message = "Type the name of the character to add as co-owner"
 	
-	return tes3mp.InputDialog(pid, config.PlayerAddCoOwnerGUI, message)
+	return tes3mp.InputDialog(pid, config.PlayerAddCoOwnerGUI, message, "")
 end
 
 local function onPlayerSettingsAddPrompt(pid, data)
@@ -952,7 +930,7 @@ end
 showHouseEditOwnerPrompt = function(pid)
 	local message = "Enter 'none' to remove current owner"
 	
-	return tes3mp.InputDialog(pid, config.HouseEditOwnerGUI, message)
+	return tes3mp.InputDialog(pid, config.HouseEditOwnerGUI, message, "")
 end
 
 local function onHouseEditOwnerPrompt(pid, data)
@@ -974,7 +952,7 @@ end
 showHouseEditPricePrompt = function(pid)
 	local message = "Enter new price"
 	
-	return tes3mp.InputDialog(pid, config.HouseEditPriceGUI, message)
+	return tes3mp.InputDialog(pid, config.HouseEditPriceGUI, message, "")
 end
 
 local function onHouseEditPricePrompt(pid, data)
@@ -1173,7 +1151,7 @@ end
 showHouseCreate = function(pid)
 	local message = "Enter a name for the house"
 	
-	return tes3mp.InputDialog(pid, config.AdminHouseCreateGUI, message)
+	return tes3mp.InputDialog(pid, config.AdminHouseCreateGUI, message, "")
 end
 
 local function onHouseCreatePrompt(pid, data)
@@ -1222,6 +1200,7 @@ end
 Methods.OnGUIAction = function(pid, idGui, data)
 	if idGui == config.AdminMainGUI then --Admin Main
 		if tonumber(data) == 0 then --Create New House
+			print(tostring(pid))
 			onAdminMainCreate(pid)
 			return true
 		elseif tonumber(data) == 1 then --Select House
@@ -1405,7 +1384,7 @@ Methods.OnInfoCommand = function(pid)
 end
 
 Methods.OnAdminCommand = function(pid)
-	local rank = Players[pid].data.settings.admin
+	local rank = Players[pid].data.settings.staffRank
 	if rank < config.requiredAdminRank then
 		--Not high enough rank to use the admin menu
 		return false
@@ -1531,7 +1510,7 @@ Methods.OnContainer = function(pid, cellDescription)
 	local refId = tes3mp.GetObjectRefId(0)
 	doLog("DEBUG: Container stuff Got refId")
 	
-	if action == actionTypes.container.REMOVE then
+	if action == enumerations.container.REMOVE then
 		if not isOwner(pname, houseName) and not isCoOwner(pname, houseName) then --We aren't interested in what the owners or co owners get up to in the cells they own.
 			--Check if the container is listed in the cell's resetInfo, to see if they're taking from a container important for a quest.
 			local dirtyThief = true --Guilty until proven innocent
@@ -1549,7 +1528,7 @@ Methods.OnContainer = function(pid, cellDescription)
 				doLog(getName(pid) .. " took an item from the container " .. refIndex .. " in " .. cdata.name .. " (Part of " .. getHouseOwnerName(cdata.house) .. "'s house: " .. cdata.house .. ") but it's fine because it's marked as a quest container.") --Necessary to log?
 			end
 		end
-	elseif action == actionTypes.container.SET then
+	elseif action == enumerations.container.SET then
 		doLog("DEBUG: Container stuff container is SET")
 		if not isOwner(pname, houseName) and not isCoOwner(pname, houseName) then --We aren't interested in what the owners or co owners get up to in the cells they own.
 			--Check if the container is listed in the cell's resetInfo, to see if they're taking from a container important for a quest.
@@ -1666,5 +1645,38 @@ Methods.IsLocked = function(houseName)
 	return isLocked(houseName)
 end
 -------------------
+
+
+customCommandHooks.registerCommand("house", Methods.OnUserCommand)
+customCommandHooks.registerCommand("housing", Methods.OnUserCommand)
+
+customCommandHooks.registerCommand("adminhouse", Methods.OnAdminCommand)
+customCommandHooks.registerCommand("adminhousing", Methods.OnAdminCommand)
+
+customCommandHooks.registerCommand("houseinfo", Methods.OnInfoCommand)
+
+customEventHooks.registerHandler("OnGUIAction", function(eventStatus, pid, idGui, data)
+	if Methods.OnGUIAction(pid, idGui, data) then return end
+end)
+
+customEventHooks.registerHandler("OnServerPostInit", function(eventStatus)
+	Methods.OnServerPostInit()
+end)
+
+customEventHooks.registerHandler("OnPlayerCellChange", function(eventStatus, pid, previousCellDescription, currentCellDescription)
+	Methods.OnPlayerCellChange(pid)
+end)
+
+customEventHooks.registerHandler("OnObjectLock", function(eventStatus, pid, cellDescription, objects)
+	Methods.OnObjectLock(pid, cellDescription)
+end)
+
+customEventHooks.registerHandler("OnContainer", function(eventStatus, pid, cellDescription, objects)
+	Methods.OnContainer(pid, cellDescription)
+end)
+
+customEventHooks.registerHandler("OnObjectDelete", function(eventStatus, pid, cellDescription, objects)
+	Methods.OnObjectDelete(pid, cellDescription)
+end)
 
 return Methods

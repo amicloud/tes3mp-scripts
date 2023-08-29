@@ -511,8 +511,11 @@ local function placeFurniture(refId, loc, cell)
 		useTempLoad = true
 	end
 
-	local uniqueIndex = logicHandler.CreateObjectAtLocation(cell, location, refId, "place")
+	--local uniqueIndex = logicHandler.CreateObjectAtLocation(cell, location, refId, "place")
 	
+	local objData = { refId = refId, count = 1, charge = -1, enchantmentCharge = -1, soul = -1}
+	local uniqueIndex = logicHandler.CreateObjectAtLocation(cell, location, objData, "place")
+
 	if useTempLoad then
 		logicHandler.UnloadCell(cell)
 	end
