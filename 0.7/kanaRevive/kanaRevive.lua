@@ -104,7 +104,8 @@ Methods.CreateReviveMarker = function(pid)
 		useTemporaryLoad = true
 	end
 	
-	local uniqueIndex = logicHandler.CreateObjectAtLocation(cellDescription, location, scriptConfig.recordRefId, "place")
+	local objData = { refId = scriptConfig.recordRefId, count = 1, charge = -1, enchantmentCharge = -1, soul = -1}
+	local uniqueIndex = logicHandler.CreateObjectAtLocation(cellDescription, location, objData, "place")
 	
 	if useTemporaryLoad then
 		logicHandler.UnloadCell(cellDescription)
@@ -300,7 +301,7 @@ Methods.OnBleedoutExpire = function(pid)
 	if config.playersRespawn then
 		-- While we could just jump straight to using Resurrect, we'll faff through the proper channels...
 		-- Note: Might have to instead start the regular dying timer, just to be safe
-		OnDeathTimeExpiration(pid)
+		OnDeathTimeExpiration(pid, Players[pid].accountName)
 	else
 		-- Set a flag permanently preventing the player from being able to be revived
 		Players[pid].data.customVariables.cannotRevive = true
