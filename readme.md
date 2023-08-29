@@ -1,5 +1,25 @@
-# 0.7 tes3mp-scripts
-Collection of all my scripts for tes3mp 0.7 (or, at least, 0.7-prerelease). The information for some scripts can be found here, however larger ones may have their own separate readme in their own folder. Unless otherwise stated, you can find installation instructions at the top of each file.
+# 0.8.x tes3mp-scripts
+This is a project to update Atkana's scripts to be compatible with current (and future) tes3mp versions.
+
+## Module Status
+### kanaFurniture ✅
+### kanaRevive ✅❓
+### kanaBank ❌❓
+### kanaHousing ❌❓
+### kanaMOTD ❌❓
+### kanaStartingItems ❌❓
+### Mark/Recall ❌❓
+### Sales Chest ❌❓
+### Server Warp ❌❓
+### Cell Reset ❌❓
+### Class Info ❌❓
+### General GUI ❌❓
+### Hotkeys Expanded ❌❓ 
+
+✅ Confirmed working with 0.8.x
+✅❓ Changes made but not tested
+❌❓ No updates and not tested
+❌ Confirmed not working
 
 ## Scripts
 ### decorateHelp
